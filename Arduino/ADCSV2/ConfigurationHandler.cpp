@@ -47,14 +47,7 @@ void ConfigurationHandler::monitor(){
     if(crc.getCRC() != 0){
       return; // Continue if CRC check pass ..
     }
-    
-    Serial.println();
-    Serial.print("CRC: OK");
-    //Serial.print(crc.getCRC());
-    Serial.print(" Commands: ");
-    Serial.print("\t"); Serial.print(cmd[0].x);
-    Serial.print("\t"); Serial.print(cmd[1].x);
-    Serial.print("\t"); Serial.println(cmd[2].x);
+   
 
     
     /**
@@ -76,12 +69,10 @@ void ConfigurationHandler::monitor(){
       switch(cmd[1].x){
         case 0x01: // start Control action
           *controlSpeedFlag = 1;
-          Serial.println("Control On");
           break;
         case 0x02: // end control action
         default:
           *controlSpeedFlag = 0;
-          Serial.println("Control Off");
           break;
       }
     }
@@ -92,17 +83,14 @@ void ConfigurationHandler::monitor(){
     // K Value
     if(cmd[0].x == 0xB1){
       SpeedControlGains->k = cmd[1].x/(float)1000;
-      Serial.print("K = "); Serial.println(SpeedControlGains->k);
     }
     // Ki Value
     if(cmd[0].x == 0xB2){
       SpeedControlGains->ki = cmd[1].x/(float)1000;
-      Serial.print("Ki = "); Serial.println(SpeedControlGains->ki);
     }
     // Kp Value
     if(cmd[0].x == 0xB3){
       SpeedControlGains->kp = cmd[1].x/(float)1000;
-      Serial.print("Kp = "); Serial.println(SpeedControlGains->kp);
     }
 
 
@@ -132,7 +120,6 @@ void ConfigurationHandler::monitor(){
      */
     if(cmd[0].x == 0x02){
       *desiredSpeed = cmd[1].x;
-      Serial.print("Desired Speed: ");Serial.println(*desiredSpeed);
     }
 
     cmd[0].x = 0;

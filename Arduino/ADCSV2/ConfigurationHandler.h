@@ -20,6 +20,7 @@ typedef  union {
 
 /**
  * Strut Definition
+ * 
  */
 struct K {
   float k;

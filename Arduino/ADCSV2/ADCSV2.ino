@@ -66,7 +66,7 @@ float p, q, r = 0;
 
 
 void setup() {
-  Serial.begin(Baud_rate);
+
   Serial1.begin(Baud_rate);
   initMpu();
   bts7960.init(LPWM, RPWM); /** Motor Control Class */
@@ -83,7 +83,7 @@ void loop() {
   // Read normalized values
   // But first Delay for 10ms MPU6050 does not like to be hit much
   // so give it time to make his mind
-  delay(20);
+  delay(10);
   
   Vector norm = mpu.readNormalizeGyro();
 
@@ -113,7 +113,7 @@ void loop() {
    
   // Track the Configuration and update
   if(Serial1.available()){
-    delay(20);
+    delay(10);
     bitsAvailable = Serial1.available();
     
     deltaBit = abs(bitsAvailable - bitsPrev);
@@ -140,11 +140,10 @@ void loop() {
     packet.data.SpeedControlResponse += SpeedControlGains.kp * (SpeedError - SpeedPreviousError);
     SpeedPreviousError = SpeedError;
     packet_send.data.SpeedControlResponse = packet.data.SpeedControlResponse*255/(float)5;
-    if(abs(packet_send.data.SpeedControlResponse) >= 35){
-      packet_send.data.SpeedControlResponse = 35*packet_send.data.SpeedControlResponse/abs(packet_send.data.SpeedControlResponse);
+    if(abs(packet_send.data.SpeedControlResponse) >= 60){
+      packet_send.data.SpeedControlResponse = 60*packet_send.data.SpeedControlResponse/abs(packet_send.data.SpeedControlResponse);
     }
 
-    Serial.println(packet_send.data.SpeedControlResponse);
     
     
     bts7960.SetMotorSpeed(abs(packet_send.data.SpeedControlResponse), packet_send.data.SpeedControlResponse/abs(packet_send.data.SpeedControlResponse));  
@@ -156,9 +155,7 @@ void loop() {
   if(sendTelemetry){
       Serial1.write(packet_send.dataStream, dataSizeSend) ;
       sendTelemetry = 0;
-      Serial.println("\tSent Data !");
   }else{
-//    Serial.println("no Send");
   }
 
   previousTime = currentTime;
@@ -170,7 +167,6 @@ void initMpu(){
   // Initialize MPU6050
   while(!mpu.begin(MPU6050_SCALE_2000DPS, MPU6050_RANGE_2G))
   {
-    Serial.println("Could not find a valid MPU6050 sensor, check wiring!");
     delay(500);
   }
   
