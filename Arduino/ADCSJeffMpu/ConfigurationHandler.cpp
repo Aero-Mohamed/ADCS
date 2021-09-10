@@ -33,8 +33,8 @@ void ConfigurationHandler::monitor(){
     }
 
     // Empty Buffer
-//    while (BT_Serial->available() && BT_Serial->read()); // empty buffer
-//    BT_Serial->flush();
+    //while (BT_Serial->available() && BT_Serial->read()); // empty buffer
+    //BT_Serial->flush();
     
 
     // Verify Data
@@ -50,7 +50,7 @@ void ConfigurationHandler::monitor(){
       *sendTelemetry = 1;
       return; // Continue if CRC check pass ..
     }
-
+    
     if(LogCommands){
       Serial.println();
       Serial.print("CRC: OK");
@@ -58,9 +58,9 @@ void ConfigurationHandler::monitor(){
       Serial.print(" Commands: ");
       Serial.print("\t"); Serial.print(cmd[0].x);
       Serial.print("\t"); Serial.print(cmd[1].x);
-      Serial.print("\t"); Serial.println(cmd[2].x);
+      Serial.print("\t"); Serial.println(cmd[2].x);  
     }
-    
+
     /**
      * Telemtery Sending Control Command    
      */

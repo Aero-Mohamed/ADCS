@@ -34,8 +34,6 @@ Packet packet; /** Packet That Hold All Data */
 Packet_Send packet_send; /** Package That Hold Data To Be Sent */
 
 
-
-
 /**
  * General Control Variables
  */
@@ -66,7 +64,7 @@ float p, q, r = 0;
 
 
 void setup() {
-  Serial.begin(Baud_rate);
+//  Serial.begin(Baud_rate);
   Serial1.begin(Baud_rate);
   initMpu();
   bts7960.init(LPWM, RPWM); /** Motor Control Class */
@@ -84,7 +82,6 @@ void loop() {
   // But first Delay for 10ms MPU6050 does not like to be hit much
   // so give it time to make his mind
   delay(20);
-  
   Vector norm = mpu.readNormalizeGyro();
 
   float toRads = PI / 180;
@@ -104,12 +101,10 @@ void loop() {
   packet.data.timing = micros()/(float)1000000;
 
   packet_send.data.timing = packet.data.timing;
-  packet_send.data.yaw = packet.data.yaw;
+  packet_send.data.yaw = getLimitedAngleReading(packet.data.yaw);
   packet_send.data.omegaZ = packet.data.omegaZ;
-  
+  packet_send.data.SpeedControlResponse = packet_send.data.yaw;
 
-    
-   
    
   // Track the Configuration and update
   if(Serial1.available()){
@@ -144,7 +139,7 @@ void loop() {
       packet_send.data.SpeedControlResponse = 35*packet_send.data.SpeedControlResponse/abs(packet_send.data.SpeedControlResponse);
     }
 
-    Serial.println(packet_send.data.SpeedControlResponse);
+//    Serial.println(packet_send.data.SpeedControlResponse);
     
     
     bts7960.SetMotorSpeed(abs(packet_send.data.SpeedControlResponse), packet_send.data.SpeedControlResponse/abs(packet_send.data.SpeedControlResponse));  
@@ -156,7 +151,7 @@ void loop() {
   if(sendTelemetry){
       Serial1.write(packet_send.dataStream, dataSizeSend) ;
       sendTelemetry = 0;
-      Serial.println("\tSent Data !");
+//      Serial.println("\tSent Data !");
   }else{
 //    Serial.println("no Send");
   }
@@ -170,7 +165,7 @@ void initMpu(){
   // Initialize MPU6050
   while(!mpu.begin(MPU6050_SCALE_2000DPS, MPU6050_RANGE_2G))
   {
-    Serial.println("Could not find a valid MPU6050 sensor, check wiring!");
+//    Serial.println("Could not find a valid MPU6050 sensor, check wiring!");
     delay(500);
   }
   
@@ -197,3 +192,9 @@ void printOutPutToSerial(){
 //}
 //
 //
+
+float getLimitedAngleReading(float angle){
+  return angle;
+  int remove_ = angle / 360;
+  return angle - (360*remove_);
+}
