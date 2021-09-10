@@ -41,7 +41,8 @@ uint8_t sendTelemetry = 0;
 /**
  * Control Variables Definition
  */
-K SpeedControlGains = {0, 0, 0};
+// kp, kd, ki
+K SpeedControlGains = {0.06, 0.04, 0.02};
 uint16_t desiredSpeed = 0; 
 uint8_t controlSpeedFlag = 0;
 float SpeedError, SpeedTotalError, SpeedPreviousError = 0;
@@ -102,8 +103,9 @@ void loop() {
 
   packet_send.data.timing = packet.data.timing;
   packet_send.data.yaw = getLimitedAngleReading(packet.data.yaw);
-  packet_send.data.omegaZ = packet.data.omegaZ;
-  packet_send.data.SpeedControlResponse = packet_send.data.yaw;
+//  packet_send.data.omegaZ = packet.data.omegaZ;
+  packet_send.data.omegaZ = getLimitedAngleReading(packet.data.yaw);
+//  packet_send.data.SpeedControlResponse = packet_send.data.yaw;
 
    
   // Track the Configuration and update
@@ -128,15 +130,20 @@ void loop() {
    */
 
   if(controlSpeedFlag){
-    SpeedError = desiredSpeed - packet.data.omegaZ;
+    SpeedError = desiredSpeed - packet.data.yaw;
+    if(abs(SpeedError) <= 1){
+      SpeedError = 0;
+      SpeedTotalError = 0;
+    }
     SpeedTotalError += SpeedError;
     packet.data.SpeedControlResponse = SpeedControlGains.k * (SpeedError);
     packet.data.SpeedControlResponse += SpeedControlGains.ki * (SpeedTotalError);
-    packet.data.SpeedControlResponse += SpeedControlGains.kp * (SpeedError - SpeedPreviousError);
+    packet.data.SpeedControlResponse += SpeedControlGains.kd * (SpeedError - SpeedPreviousError);
     SpeedPreviousError = SpeedError;
+    
     packet_send.data.SpeedControlResponse = packet.data.SpeedControlResponse*255/(float)5;
-    if(abs(packet_send.data.SpeedControlResponse) >= 35){
-      packet_send.data.SpeedControlResponse = 35*packet_send.data.SpeedControlResponse/abs(packet_send.data.SpeedControlResponse);
+    if(abs(packet_send.data.SpeedControlResponse) >= 80){
+      packet_send.data.SpeedControlResponse = 80*packet_send.data.SpeedControlResponse/abs(packet_send.data.SpeedControlResponse);
     }
 
 //    Serial.println(packet_send.data.SpeedControlResponse);

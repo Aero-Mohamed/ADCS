@@ -23,7 +23,7 @@ typedef  union {
  */
 struct K {
   float k;
-  float kp;
+  float kd;
   float ki;
 };
 

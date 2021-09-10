@@ -64,6 +64,7 @@ void ConfigurationHandler::monitor(){
     /**
      * Telemtery Sending Control Command    
      */
+
     if(cmd[0].x == 0xA1){
       switch(cmd[1].x){
         case 0x01: // Send Telemetry
@@ -74,6 +75,8 @@ void ConfigurationHandler::monitor(){
           *sendTelemetry = 0;
           break;
       }
+    }else{
+      *sendTelemetry = 1;
     }
 
     if(cmd[0].x == 0xA2){
@@ -113,9 +116,9 @@ void ConfigurationHandler::monitor(){
     }
     // Kp Value
     if(cmd[0].x == 0xB3){
-      SpeedControlGains->kp = cmd[1].x/(float)1000;
+      SpeedControlGains->kd = cmd[1].x/(float)1000;
       if(LogCommands){
-        Serial.print("Kp = "); Serial.println(SpeedControlGains->kp);
+        Serial.print("Kd = "); Serial.println(SpeedControlGains->kd);
       }
     }
 

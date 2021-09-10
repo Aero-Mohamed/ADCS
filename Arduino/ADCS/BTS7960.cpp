@@ -9,15 +9,15 @@ void BTS7960::init(uint8_t L_PWM, uint8_t R_PWM){
 }
 
 void BTS7960::TurnRight(uint8_t pwm){
-     analogWrite(_L_PWM, 0);
+   analogWrite(_L_PWM, 0);
 	 delayMicroseconds(100);
-     analogWrite(_R_PWM, pwm);
+   analogWrite(_R_PWM, pwm);
 }
 
 void BTS7960::TurnLeft(uint8_t pwm){
-     analogWrite(_R_PWM, 0);
+   analogWrite(_R_PWM, 0);
 	 delayMicroseconds(100);
-     analogWrite(_L_PWM, pwm);
+   analogWrite(_L_PWM, pwm);
 }
 
 
