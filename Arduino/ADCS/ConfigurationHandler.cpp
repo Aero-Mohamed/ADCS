@@ -13,13 +13,14 @@
 #define LogCommands 0
 
 
-bool ConfigurationHandler::init(HardwareSerial *BlueTooth_Serial, uint8_t *send_Telemetry, uint16_t *set_speed, K *Speed_Control_Gains, BTS7960 *bts_7960, uint8_t *control_Speed_Flag){
+bool ConfigurationHandler::init(HardwareSerial *BlueTooth_Serial, uint8_t *send_Telemetry, uint16_t *set_speed, K *Speed_Control_Gains, BTS7960 *bts_7960, uint8_t *control_Speed_Flag, uint8_t *control_Angle_Flag){
     BT_Serial = BlueTooth_Serial;
     sendTelemetry = send_Telemetry;
     desiredSpeed = set_speed;
     SpeedControlGains = Speed_Control_Gains;
     bts7960 = bts_7960;
     controlSpeedFlag = control_Speed_Flag;
+    controlAngleFlag = control_Angle_Flag;
     return true;
 }
 
@@ -90,6 +91,24 @@ void ConfigurationHandler::monitor(){
         case 0x02: // end control action
         default:
           *controlSpeedFlag = 0;
+          if(LogCommands){
+            Serial.println("Control Off");
+          }
+          break;
+      }
+    }
+
+    if(cmd[0].x == 0xA3){
+      switch(cmd[1].x){
+        case 0x01: // start Control action
+          *controlAngleFlag = 1;
+          if(LogCommands){
+            Serial.println("Control On");
+          }
+          break;
+        case 0x02: // end control action
+        default:
+          *controlAngleFlag = 0;
           if(LogCommands){
             Serial.println("Control Off");
           }

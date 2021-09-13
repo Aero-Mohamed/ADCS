@@ -94,7 +94,7 @@ enum ControllerStatus {
 class ConfigurationHandler
 {
     public:
-        bool init(HardwareSerial *BlueTooth_Serial, uint8_t *send_Telemetry, uint16_t *set_speed, K *Speed_Control_Gains, BTS7960 *bts_7960, uint8_t *control_Speed_Flag);
+        bool init(HardwareSerial *BlueTooth_Serial, uint8_t *send_Telemetry, uint16_t *set_speed, K *Speed_Control_Gains, BTS7960 *bts_7960, uint8_t *control_Speed_Flag, uint8_t *control_Angle_Flag);
         void monitor();
         uint16_t readInt16();
         uint8_t readInt8();
@@ -107,6 +107,7 @@ class ConfigurationHandler
         K *SpeedControlGains;
         BTS7960 *bts7960;
         uint8_t *controlSpeedFlag;
+        uint8_t *controlAngleFlag;
         
         
 
