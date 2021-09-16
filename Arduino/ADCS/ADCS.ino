@@ -1,7 +1,5 @@
 // Libraries
 #include <math.h>
-#include <SoftwareSerial.h>
-#include <Wire.h>
 #include <MPU6050.h>
 #include "ConfigurationHandler.h"
 #include "BTS7960.h"
@@ -12,11 +10,6 @@
 #define Baud_rate 115200
 #define pi 3.14
 
-
-
-#define ENA 9
-#define IN1 6
-#define IN2 7
 
 
 //define software serial: RX, TX
@@ -43,13 +36,14 @@ uint8_t sendTelemetry = 0;
  */
 // kp, kd, ki
 //K SpeedControlGains = {0.025, 0.02, 0.005};
-K SpeedControlGains = {0.03, 0.008, 0.006};
-uint16_t desiredSpeed = 12;
+K SpeedControlGains = {0.04, 0.009, 0.007};
+//K SpeedControlGains = {0.00, 0.000, 0.000};
+int16_t desiredSpeed = 10;
 uint8_t controlSpeedFlag = 0;
 float SpeedError, SpeedTotalError, SpeedPreviousError, motorPMW = 0;
 
-K AngleControlGains = {0.0, 0.0, 0.0};
-uint16_t desiredAngle = 0;
+K AngleControlGains = {0.05, 0.0, 0.0};
+int16_t desiredAngle = 0;
 uint8_t controlAngleFlag = 0;
 float AngleError, AngleTotalError, AnglePreviousError, angleRes = 0;
 
@@ -75,9 +69,8 @@ void setup() {
   Serial1.begin(Baud_rate);
   initMpu();
   bts7960.init(LPWM, RPWM); /** Motor Control Class */
-  config_handler.init(&Serial1, &sendTelemetry, &desiredSpeed, &SpeedControlGains, &bts7960, &controlSpeedFlag, &controlAngleFlag);
+  config_handler.init(&Serial1, &sendTelemetry, &desiredAngle, &AngleControlGains, &bts7960, &controlSpeedFlag, &controlAngleFlag, &desiredAngle);
   while (Serial1.available() && Serial1.read()); // empty buffer
-//  bts7960.runMotorTest();
 }
 
 void loop() {
@@ -109,7 +102,7 @@ void loop() {
   packet.data.timing = micros()/(float)1000000;
 
   packet_send.data.timing = packet.data.timing;
-  packet_send.data.yaw = getLimitedAngleReading(packet.data.yaw);
+  packet_send.data.yaw = packet.data.yaw;
   packet_send.data.omegaZ = packet.data.omegaZ;
 //  packet_send.data.omegaZ = getLimitedAngleReading(packet.data.yaw);
 //  packet_send.data.SpeedControlResponse = packet_send.data.yaw;
@@ -134,43 +127,21 @@ void loop() {
   printOutPutToSerial();
 
   
+  if(!controlSpeedFlag && !controlAngleFlag){
+    AnglePidRest();
+    SpeedPidRest(); 
+  }
   /**
    * Speed PID
    */
   if(controlSpeedFlag){
     SpeedPidController();
-  }else{
-    SpeedPidRest();
   }
 
 
-//  if(controlAngleFlag){
-//    AngleError = desiredAngle - packet.data.yaw;
-//    
-//    angleRes = AngleControlGains.k * (AngleError);
-//    angleRes += AngleControlGains.ki * (AngleTotalError);
-//    angleRes += AngleControlGains.kd * (AngleError - AnglePreviousError);
-//    
-//    AnglePreviousError = AngleError;
-//    AngleTotalError += AngleError;
-//
-//    /**
-//     * Somehow must be mapped to rotational speed value
-//     */
-//    angleRes = angleRes *255/(float)5;
-//
-//    if(abs(angleRes) >= 15){
-//      angleRes = 15* (angleRes/abs(angleRes));
-//    }
-//
-//    /**
-//     * Then Control the speed
-//     */
-//    desiredSpeed = angleRes;
-//    SpeedPidController();
-//  }else{
-//    AnglePidRest();
-//  }
+  if(controlAngleFlag){
+    AnglePidController();
+  }
   
 
 
@@ -193,14 +164,13 @@ void SpeedPidRest(){
   SpeedTotalError = 0;
   SpeedPreviousError = 0;
   motorPMW = 0;
-//  bts7960.MotorStop();
 }
 
 void AnglePidRest(){
   AngleError = 0;
   AngleTotalError = 0;
   AnglePreviousError = 0;
-  motorPMW = 0;
+  angleRes = 0;
 }
 
 void initMpu(){
@@ -213,17 +183,13 @@ void initMpu(){
   
   // Calibrate gyroscope. The calibration must be at rest.
   // If you don't want calibrate, comment this line.
-  mpu.calibrateGyro(200);
-//  while(abs(th.ZAxis) > 15){
-//    digitalWrite(LED_BUILTIN, LOW);
-//    th = mpu.calibrateGyro(200); 
-//    digitalWrite(LED_BUILTIN, HIGH);
-//    delay(10);
-//  }
-  
-//  Serial.println();
-//  Serial.print("Th.Z = ");
-//  Serial.println(th.ZAxis);
+  Vector th = mpu.calibrateGyro(200);
+  while(abs(th.ZAxis) > 10){
+    digitalWrite(LED_BUILTIN, LOW);
+    th = mpu.calibrateGyro(200); 
+    digitalWrite(LED_BUILTIN, HIGH);
+    delay(10);
+  }
 
   // Set threshold sensivty. Default 3.
   // If you don't want use threshold, comment this line or set 0.
@@ -233,12 +199,13 @@ void initMpu(){
 
 
 void printOutPutToSerial(){
-//  Serial.println(packet_send.data.omegaZ);
+//  Serial.print("Gyro Z = "); Serial.print(packet_send.data.omegaZ);
+//  Serial.print("\tAngle Z = "); Serial.println(packet_send.data.yaw);
 }
 
 void SpeedPidController(){
   SpeedError = desiredSpeed - packet.data.omegaZ;
-  
+    
   motorPMW = SpeedControlGains.k * (SpeedError);
   motorPMW += SpeedControlGains.ki * (SpeedTotalError);
   motorPMW += SpeedControlGains.kd * (SpeedError - SpeedPreviousError);
@@ -248,14 +215,40 @@ void SpeedPidController(){
 //    if (SpeedTotalError >8000) SpeedTotalError = 8000;
 //    if (SpeedTotalError <-8000) SpeedTotalError = -8000;
   
-  motorPMW = motorPMW *255/(float)5;
-  if(abs(motorPMW) >= 120){
-    motorPMW = 120* (motorPMW/abs(motorPMW));
+  motorPMW = motorPMW *255/(float)3.5;
+  if(abs(motorPMW) >= 180){
+    motorPMW = 180* (motorPMW/abs(motorPMW));
   }
   
   bts7960.SetMotorSpeed(abs(motorPMW), motorPMW/abs(motorPMW));  
   packet_send.data.SpeedControlResponse = motorPMW;
+
+}
+
+void AnglePidController(){
+  AngleError = getLimitedAngleReading(desiredAngle - packet.data.yaw);
+    
+  angleRes = AngleControlGains.k * (AngleError);
+  angleRes += AngleControlGains.ki * (AngleTotalError);
+  angleRes += AngleControlGains.kd * (AngleError - AnglePreviousError);
   
+  AnglePreviousError = AngleError;
+  AngleTotalError += AngleError;
+
+  /**
+   * Somehow must be mapped to rotational speed value
+   */
+  angleRes = angleRes * 3;
+  if(abs(angleRes) >= 10){
+    angleRes = 10* (angleRes/abs(angleRes));
+  }
+
+  /**
+   * Then Control the speed
+   */
+  desiredSpeed = angleRes;
+  SpeedPidController();
+  packet_send.data.SpeedControlResponse = angleRes;
 }
 
 

@@ -13,10 +13,11 @@
 #define LogCommands 0
 
 
-bool ConfigurationHandler::init(HardwareSerial *BlueTooth_Serial, uint8_t *send_Telemetry, uint16_t *set_speed, K *Speed_Control_Gains, BTS7960 *bts_7960, uint8_t *control_Speed_Flag, uint8_t *control_Angle_Flag){
+bool ConfigurationHandler::init(HardwareSerial *BlueTooth_Serial, uint8_t *send_Telemetry, int16_t *set_speed, K *Speed_Control_Gains, BTS7960 *bts_7960, uint8_t *control_Speed_Flag, uint8_t *control_Angle_Flag, int16_t *set_angle){
     BT_Serial = BlueTooth_Serial;
     sendTelemetry = send_Telemetry;
     desiredSpeed = set_speed;
+    desiredAngle = set_angle;
     SpeedControlGains = Speed_Control_Gains;
     bts7960 = bts_7960;
     controlSpeedFlag = control_Speed_Flag;
@@ -53,13 +54,13 @@ void ConfigurationHandler::monitor(){
     }
 
     if(LogCommands){
-      Serial.println();
-      Serial.print("CRC: OK");
-      //Serial.print(crc.getCRC());
-      Serial.print(" Commands: ");
-      Serial.print("\t"); Serial.print(cmd[0].x);
-      Serial.print("\t"); Serial.print(cmd[1].x);
-      Serial.print("\t"); Serial.println(cmd[2].x);
+//      Serial.println();
+//      Serial.print("CRC: OK");
+//      //Serial.print(crc.getCRC());
+//      Serial.print(" Commands: ");
+//      Serial.print("\t"); Serial.print(cmd[0].x);
+//      Serial.print("\t"); Serial.print(cmd[1].x);
+//      Serial.print("\t"); Serial.println(cmd[2].x);
     }
     
     /**
@@ -91,6 +92,7 @@ void ConfigurationHandler::monitor(){
         case 0x02: // end control action
         default:
           *controlSpeedFlag = 0;
+          bts7960->MotorStop();
           if(LogCommands){
             Serial.println("Control Off");
           }
@@ -109,6 +111,7 @@ void ConfigurationHandler::monitor(){
         case 0x02: // end control action
         default:
           *controlAngleFlag = 0;
+          bts7960->MotorStop();
           if(LogCommands){
             Serial.println("Control Off");
           }
@@ -170,6 +173,12 @@ void ConfigurationHandler::monitor(){
       *desiredSpeed = cmd[1].x;
       if(LogCommands){
         Serial.print("Desired Speed: ");Serial.println(*desiredSpeed);
+      }
+    }
+    if(cmd[0].x == 0x03){
+      *desiredAngle = cmd[1].x;
+      if(LogCommands){
+        Serial.print("Desired Angle: ");Serial.println(*desiredAngle);
       }
     }
 

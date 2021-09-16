@@ -28,11 +28,13 @@ void BTS7960::MotorStop(){
 
 void BTS7960::SetMotorSpeed(uint8_t pwm, uint8_t turnLeft){
   if(pwm > 1){
-    TurnLeft(100);
-    delay(50);
     if(turnLeft == 1){
+      TurnLeft(150);
+      delay(50);
       TurnLeft(pwm);
     }else{
+      TurnRight(150);
+      delay(50);
       TurnRight(pwm);
     }  
   }else{
@@ -42,13 +44,13 @@ void BTS7960::SetMotorSpeed(uint8_t pwm, uint8_t turnLeft){
 }
 
 void BTS7960::runMotorTest(){
-  SetMotorSpeed(100, 1);
+  SetMotorSpeed(30, 1);
   delay(3000);
   MotorStop();
   delay(3000);
 
 
-  SetMotorSpeed(100, 0);
+  SetMotorSpeed(30, 0);
   delay(3000);
   MotorStop();
 }
