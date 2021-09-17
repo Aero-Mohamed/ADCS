@@ -238,16 +238,25 @@ void AnglePidController(){
   /**
    * Somehow must be mapped to rotational speed value
    */
-  angleRes = angleRes * 3;
-  if(abs(angleRes) >= 10){
-    angleRes = 10* (angleRes/abs(angleRes));
-  }
+//  angleRes = angleRes * 3;
+//  if(abs(angleRes) >= 10){
+//    angleRes = 10* (angleRes/abs(angleRes));
+//  }
 
   /**
    * Then Control the speed
    */
-  desiredSpeed = angleRes;
-  SpeedPidController();
+//  desiredSpeed = angleRes;
+//  SpeedPidController();
+  
+  
+  
+  angleRes = angleRes *255/(float)3.5;
+  if(abs(angleRes) >= 150){
+    angleRes = 150* (angleRes/abs(angleRes));
+  }
+  
+  bts7960.SetMotorSpeed(abs(angleRes), angleRes/abs(angleRes));  
   packet_send.data.SpeedControlResponse = angleRes;
 }
 
